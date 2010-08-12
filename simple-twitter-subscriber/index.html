@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Simple Twitter Subscriber</title>
+    <link href="styles.css" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript" src="http://api.kwwika.com/latest/"></script>
+    
+    <script type="text/javascript" src="MyConnectionListener.js"></script>
+    <script src="MySubscriptionListener.js" type="text/javascript"></script>
+    <script type="text/javascript">
+		function log(message) {
+			var logElement = document.getElementById('debuglog');
+			logElement.innerHTML = "<div class='log-message'>" + message + "</div>" + logElement.innerHTML;
+		}
+    
+		var connection = kwwika.connect(new MyConnectionListener());
+
+		var subscriptionListener = new MySubscriptionListener();
+        var currentSubscription = null;
+        function subscribe()
+        {
+            var subscribeTo = document.getElementById("subscribeTo").value;
+            if(/\/[A-Z\/]+[A-Z]/.test(subscribeTo))
+            {
+                if(currentSubscription)
+                {
+                    connection.unsubscribe(currentSubscription);
+                }
+                currentSubscription = connection.subscribe(subscribeTo, subscriptionListener);
+            }
+        }
+
+        function subscribeToTopic(e)
+        {
+            e = e || window.event;
+            var el = e.srcElement || e.target;
+            if(el.tagName.toLowerCase() == "li")
+            {
+                document.getElementById("subscribeTo").value = el.innerHTML;
+                subscribe();
+            }
+        }
+
+        function bind(type, el, func)
+        {
+            if(el.addEventListener)
+            {
+                el.addEventListener(type, func, false);
+            }
+            else if(el.attachEvent)
+            {
+                el.attachEvent("on" + type, func);
+            }
+            else alert("can't bind to \"" + type + "\" event");
+        }
+
+        bind("load", window, function()
+        {
+            bind("click", document.getElementById("topicList"), subscribeToTopic);
+        });
+    </script>
+</head>
+<body>
+    <h3>Available Topics</h3>
+    <p>Click to subscribe.</p>
+    <ul id="topicList">
+        <li>/KWWIKA/TWITTER/HASHTAGS/NOWPLAYING</li>
+        <li>/KWWIKA/TWITTER/HASHTAGS/TECH</li>
+        <li>/KWWIKA/TWITTER/HASHTAGS/TWITTERART</li>
+        <li>/KWWIKA/TWITTER/SEARCHES/KWWIKA</li>
+        <li>/AARONBASSETT/TWITTER/HASHTAGS/BARCAMP</li>
+    </ul>
+
+    <h3>Subscribed</h3>
+    <span>Subscribed to:</span>
+    <input type="text" id="subscribeTo" readonly="readonly" />
+    <!--input type="button" value="Subscribe" id="subscribeToBtn" onclick="subscribe();" disabled="disabled" /-->
+
+    <!-- Real-Time updates -->
+    <div id="latest_update" class="shadowed"></div>
+    
+    <div id="debuglog"></div>
+
+    <!-- Connection indicator -->
+    <div id="connection_status" class="top right shadowed">
+        <div id="connection_status_message" class="statusMessage"></div>
+        <img id="connection_status_image" width="20" height="20" alt="Not connected" src="images/notconnected.png" />
+    </div>
+
+</body>
+</html>
