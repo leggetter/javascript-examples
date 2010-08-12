@@ -81,34 +81,16 @@ body {
 	background-color: white;
 }
 
-label {
-    display: inline-block;
-    width: 120px;
-    text-align: right;
-    margin-right: 10px;
+h1
+{
+    font-size: 14pt;
 }
 
-#subscribeTo
+h2
 {
-    width: 400px;
-}
-
-#topicList
-{
-    overflow: auto;
-}
-
-#topicList li
-{
-    float: left;
+    font-size: 13pt;
     clear: both;
-    cursor: pointer;
-    text-decoration: underline;
-}
-
-#topicList li: hover
-{
-    color: #E7E7E7;
+    padding-top: 20px;
 }
 
 #latest_update

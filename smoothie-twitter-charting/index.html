@@ -2,7 +2,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Smoothie Twitter Real-Time Charting</title>
+    <title>Smoothie Twitter Real-Time Charting using Kwwika</title>
     <link href="styles.css" rel="stylesheet" type="text/css" />
 
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.4.2.min.js"></script> 
@@ -213,9 +213,16 @@
     </script>
 </head>
 <body>
+    <h1>Smoothie Twitter Real-Time Charting using Kwwika</h1>
+
+    <p>Source code <a href="http://github.com/kwwika/javascript-examples/tree/master/smoothie-twitter-charting/">available in GitHub</a>
+    and code will run from http://localhost. If you want to run this on your own domain the you'll need to
+    <a href="http://kwwika.com/#getbeta">Register with Kwwika</a> and let us know you want access to this data.</p>
+
+    <h2>Real-time Stats</h2>
     <!-- Real-Time updates -->
     <canvas id="tweet_rate_chart" width="400" height="150"></canvas>
-
+    
     <table id="tweet_stats">
         <thead>
             <tr><td>topic</td><td>interval</td><td>total</td><td>subscribed</td></tr>
@@ -223,7 +230,8 @@
         <tbody id="topic_tweet_count">
         </tbody>
     </table>
-    
+
+    <h2>Real-time Tweets</h2>    
     <div id="latest_update" class="shadowed"></div>    
     
     <div id="debuglog"></div>
