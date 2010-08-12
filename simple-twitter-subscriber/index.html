@@ -6,60 +6,133 @@
     <link href="styles.css" rel="stylesheet" type="text/css" />
 
     <script type="text/javascript" src="http://api.kwwika.com/latest/"></script>
-    
-    <script type="text/javascript" src="MyConnectionListener.js"></script>
-    <script src="MySubscriptionListener.js" type="text/javascript"></script>
+
+    <script src="../libs/kwwika/examples/ConnectionListener.js" type="text/javascript"></script>
+
     <script type="text/javascript">
-		function log(message) {
-			var logElement = document.getElementById('debuglog');
-			logElement.innerHTML = "<div class='log-message'>" + message + "</div>" + logElement.innerHTML;
-		}
-    
-		var connection = kwwika.connect(new MyConnectionListener());
-
-		var subscriptionListener = new MySubscriptionListener();
-        var currentSubscription = null;
-        function subscribe()
+        var logger =
         {
-            var subscribeTo = document.getElementById("subscribeTo").value;
-            if(/\/[A-Z\/]+[A-Z]/.test(subscribeTo))
+            log: function(message) {
+			    var logElement = document.getElementById('debuglog');
+			    logElement.innerHTML = "<div class='log-message'>" + message + "</div>" + logElement.innerHTML;
+		    }
+        };
+
+        function TwitterSubscriber(logger)
+        {
+            this.logger = logger;
+	        this.count = 0;
+	        this.maxMessages = 25;
+            this.currentSubscription = null;
+            this.connection = null;
+	
+	        function prepareHTML(sScreenName, sUserAvatar, sMessageText, sId, sCreatedAt)
             {
-                if(currentSubscription)
+		        return "<div class='message'>" +
+				        "	<div class='profile'>" +
+                        "       <a href='http://twitter.com/" + sScreenName + "' target='_blank'>" +
+				        "		    <img alt='" + sScreenName + "' width='48' height='48' src='" + sUserAvatar + "' class='avatar' />" +
+				        "	    <a>" +
+                        "   </div>" +
+				        "	<div class='messagebody'>" +
+				        "		<span class='screenName'>" + sScreenName + "</span>" +
+				        "		<span class='text'>" + sMessageText + "</span>" +
+				        "		<span class='time'>@<a href='http://twitter.com/"+sScreenName+"/statuses/"+sId+"'>"+sCreatedAt+"</a></span>" +
+				        "	</div>" +
+				        "	<div class='clear'></div>" +
+				        "</div>";
+	        };
+	
+	        this.topicUpdated = function(oSub, mUpdate)
+            {
+		        if (mUpdate.Text)
                 {
-                    connection.unsubscribe(currentSubscription);
+			        var element = document.getElementById('latest_update');
+			
+			        element.innerHTML = prepareHTML(mUpdate["ScreenName"], mUpdate["UserProfileImageUrl"], mUpdate["Text"], mUpdate["Id"], mUpdate["CreatedAt"]) + element.innerHTML;
+			
+			        if (this.count >= this.maxMessages) {
+				        element.removeChild(element.lastChild);
+			        } else {
+				        ++this.count;
+			        }
+		        }
+	        };
+
+	        this.topicError = function(oSub, sError)
+            {
+		        this.logger.log("Error: " + sError);
+	        };
+
+            this.connect = function()
+            {
+                this.connection = kwwika.connect(new kwwika.examples.ConnectionListener(this.logger));
+            };
+
+            this.subscribe = function(topic)
+            {
+                if(this.currentSubscription)
+                {
+                    this.connection.unsubscribe(this.currentSubscription);
                 }
-                currentSubscription = connection.subscribe(subscribeTo, subscriptionListener);
+                this.currentSubscription = this.connection.subscribe(topic, this);
             }
-        }
+        };
 
-        function subscribeToTopic(e)
+        var example = new function()
         {
-            e = e || window.event;
-            var el = e.srcElement || e.target;
-            if(el.tagName.toLowerCase() == "li")
-            {
-                document.getElementById("subscribeTo").value = el.innerHTML;
-                subscribe();
-            }
-        }
+            this.twitterSubscriber = null;
 
-        function bind(type, el, func)
-        {
-            if(el.addEventListener)
+            this.subscribe = function()
             {
-                el.addEventListener(type, func, false);
-            }
-            else if(el.attachEvent)
-            {
-                el.attachEvent("on" + type, func);
-            }
-            else alert("can't bind to \"" + type + "\" event");
-        }
+                var subscribeTo = document.getElementById("subscribeTo").value;
+                if(/\/[A-Z\/]+[A-Z]/.test(subscribeTo))
+                {
+                    this.twitterSubscriber.subscribe(subscribeTo);
+                }
+            };
 
-        bind("load", window, function()
-        {
-            bind("click", document.getElementById("topicList"), subscribeToTopic);
-        });
+            this.subscribeToTopic = function(e)
+            {
+                e = e || window.event;
+                var el = e.srcElement || e.target;
+                if(el.tagName.toLowerCase() == "li")
+                {
+                    document.getElementById("subscribeTo").value = el.innerHTML;
+                    this.subscribe();
+                }
+            };
+
+            this.bind = function(type, el, func)
+            {
+                if(el.addEventListener)
+                {
+                    el.addEventListener(type, func, false);
+                }
+                else if(el.attachEvent)
+                {
+                    el.attachEvent("on" + type, func);
+                }
+                else alert("can't bind to \"" + type + "\" event");
+            };
+
+            this.init = function()
+            {
+                this.twitterSubscriber = new TwitterSubscriber(logger);
+                this.twitterSubscriber.connect();
+
+                var self = this;
+                this.bind("load", window, function()
+                {
+                    self.bind("click", document.getElementById("topicList"), function(e)
+                    {
+                        self.subscribeToTopic(e);
+                    });
+                });
+            }
+        };
+
+        example.init();
     </script>
 </head>
 <body>

@@ -1,9 +1,15 @@
-function MyConnectionListener() {
-	this.connectionStatusUpdated = function(sStatus) {
-		log("connectionStatusUpdated: " + sStatus);
+kwwika.namespace("kwwika.examples");
 
-		var imgElement = document.getElementById('connection_status_image');
-		var msgElement = document.getElementById('connection_status_message');
+kwwika.examples.ConnectionListener = function(logger, imageId, messageId)
+{
+    this.logger = logger;
+    this.imageId = imageId || 'connection_status_image';
+    this.messageId = messageId || 'connection_status_message';
+	this.connectionStatusUpdated = function(sStatus) {
+		this.logger.log("connectionStatusUpdated: " + sStatus);
+
+		var imgElement = document.getElementById(this.imageId);
+		var msgElement = document.getElementById(this.messageId);
 		var sMsg;
 
 		switch (sStatus) {
