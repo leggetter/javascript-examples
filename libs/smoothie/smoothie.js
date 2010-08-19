@@ -27,6 +27,7 @@
  * v1.0: Main charting library, by Joe Walnes
  * v1.1: Auto scaling of axis, by Neil Dunn
  * v1.2: fps (frames per second) option, by Mathias Petterson
+ * v1.3: Fix for divide by zero, by Paul Nikitochkin
  */
 
 function TimeSeries() {
@@ -34,17 +35,17 @@ function TimeSeries() {
   /**
    * The maximum value ever seen in this time series.
    */
-  this.max = undefined;
+  this.max = Number.NaN;
   /**
    * The minimum value ever seen in this time series.
    */
-  this.min = undefined;
+  this.min = Number.NaN;
 }
 
 TimeSeries.prototype.append = function(timestamp, value) {
   this.data.push([timestamp, value]);
-  this.maxValue = this.maxValue ? Math.max(this.maxValue, value) : value;
-  this.minValue = this.minValue ? Math.min(this.minValue, value) : value;
+  this.maxValue = !isNaN(this.maxValue) ? Math.max(this.maxValue, value) : value;
+  this.minValue = !isNaN(this.minValue) ? Math.min(this.minValue, value) : value;
 };
 
 function SmoothieChart(options) {
@@ -130,22 +131,22 @@ SmoothieChart.prototype.render = function(canvas, time) {
   canvasContext.restore();
 
   // Calculate the current scale of the chart, from all time series.
-  var maxValue = undefined;
-  var minValue = undefined;
+  var maxValue = Number.NaN;
+  var minValue = Number.NaN;
 
   for (var d = 0; d < this.seriesSet.length; d++) {
       // TODO(ndunn): We could calculate / track these values as they stream in.
       var timeSeries = this.seriesSet[d].timeSeries;
-      if (timeSeries.maxValue) {
-          maxValue = maxValue ? Math.max(maxValue, timeSeries.maxValue) : timeSeries.maxValue;
+      if (!isNaN(timeSeries.maxValue)) {
+          maxValue = !isNaN(maxValue) ? Math.max(maxValue, timeSeries.maxValue) : timeSeries.maxValue;
       }
 
-      if (timeSeries.minValue) {
-          minValue = minValue ? Math.min(minValue, timeSeries.minValue) : timeSeries.minValue;
+      if (!isNaN(timeSeries.minValue)) {
+          minValue = !isNaN(minValue) ? Math.min(minValue, timeSeries.minValue) : timeSeries.minValue;
       }
   }
 
-  if (!maxValue && !minValue) {
+  if (isNaN(maxValue) && isNaN(minValue)) {
       return;
   }
 
@@ -178,11 +179,12 @@ SmoothieChart.prototype.render = function(canvas, time) {
       var x = Math.round(dimensions.width - ((time - dataSet[i][0]) / options.millisPerPixel));
       var value = dataSet[i][1];
       var offset = maxValue - value;
-      var scaledValue = Math.round((offset / valueRange) * dimensions.height);
+      var scaledValue = valueRange ? Math.round((offset / valueRange) * dimensions.height) : 0;
       var y = Math.max(Math.min(scaledValue, dimensions.height - 1), 1); // Ensure line is always on chart.
 
       if (i == 0) {
         firstX = x;
+        canvasContext.moveTo(x, y);
       }
       // Great explanation of Bezier curves: http://en.wikipedia.org/wiki/B�zier_curve#Quadratic_curves
       //
@@ -198,10 +200,12 @@ SmoothieChart.prototype.render = function(canvas, time) {
       // Importantly, A and P are at the same y coordinate, as are B and Q. This is
       // so adjacent curves appear to flow as one.
       //
-      canvasContext.bezierCurveTo( // startPoint (A) is implicit from last iteration of loop
-        Math.round((lastX + x) / 2), lastY, // controlPoint1 (P)
-        Math.round((lastX + x)) / 2, y, // controlPoint2 (Q)
-        x, y); // endPoint (B)
+      else {
+        canvasContext.bezierCurveTo( // startPoint (A) is implicit from last iteration of loop
+          Math.round((lastX + x) / 2), lastY, // controlPoint1 (P)
+          Math.round((lastX + x)) / 2, y, // controlPoint2 (Q)
+          x, y); // endPoint (B)
+      }
 
       lastX = x, lastY = y;
     }
