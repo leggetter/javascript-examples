@@ -51,9 +51,12 @@
 			
 			        element.innerHTML = prepareHTML(mUpdate["ScreenName"], mUpdate["UserProfileImageUrl"], mUpdate["Text"], mUpdate["Id"], mUpdate["CreatedAt"]) + element.innerHTML;
 			
-			        if (this.count >= this.maxMessages) {
+			        if (this.count >= this.maxMessages)
+                    {
 				        element.removeChild(element.lastChild);
-			        } else {
+			        }
+                    else
+                    {
 				        ++this.count;
 			        }
 		        }
@@ -62,6 +65,8 @@
 	        this.topicError = function(oSub, sError)
             {
 		        this.logger.log("Error: " + sError);
+
+                this.currentSubscription = null;
 	        };
 
             this.connect = function()
@@ -89,6 +94,10 @@
                 if(/\/[A-Z\/]+[A-Z]/.test(subscribeTo))
                 {
                     this.twitterSubscriber.subscribe(subscribeTo);
+                }
+                else
+                {
+                    logger.log(subscribeTo + " is not a valid topic name");
                 }
             };
 
@@ -128,7 +137,16 @@
                     {
                         self.subscribeToTopic(e);
                     });
-                });
+
+                    self.bind("keyup", document.getElementById("subscribeTo"), function(e)
+                    {
+                        e = e || window.event;
+                        if(e.keyCode == 13)
+                        {
+                            self.subscribe();
+                        }
+                    });
+                });                
             }
         };
 
@@ -166,7 +184,7 @@
 
     <h3>Subscribed</h3>
     <span>Subscribed to:</span>
-    <input type="text" id="subscribeTo" readonly="readonly" />
+    <input type="text" id="subscribeTo" />
     <!--input type="button" value="Subscribe" id="subscribeToBtn" onclick="subscribe();" disabled="disabled" /-->
 
     <!-- Real-Time updates -->
